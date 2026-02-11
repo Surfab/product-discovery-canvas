@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Discovery Canvas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; min-height: 100vh; }
+        .container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; position: relative; }
+        .header h1 { font-size: 32px; margin-bottom: 10px; }
+        .header p { opacity: 0.9; font-size: 16px; }
+        .lang-selector { position: absolute; top: 20px; right: 30px; display: flex; gap: 5px; background: rgba(255,255,255,0.2); padding: 5px; border-radius: 20px; }
+        .lang-btn { background: transparent; border: none; color: white; padding: 8px 16px; border-radius: 15px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.3s; }
+        .lang-btn:hover { background: rgba(255,255,255,0.2); }
+        .lang-btn.active { background: white; color: #667eea; }
+        .toolbar { background: #f8f9fa; padding: 15px 30px; border-bottom: 1px solid #e0e0e0; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.3s; }
+        .btn-primary { background: #667eea; color: white; } .btn-primary:hover { background: #5568d3; }
+        .btn-secondary { background: #6c757d; color: white; } .btn-secondary:hover { background: #5a6268; }
+        .btn-success { background: #28a745; color: white; } .btn-success:hover { background: #218838; }
+        .btn-info { background: #17a2b8; color: white; } .btn-info:hover { background: #138496; }
+        .status-indicator { margin-left: auto; padding: 8px 16px; background: #28a745; color: white; border-radius: 20px; font-size: 13px; font-weight: 600; }
+        .canvas-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0; padding: 30px; }
+        .canvas-section { border: 2px solid #e0e0e0; padding: 20px; position: relative; }
+        .canvas-section:nth-child(odd) { border-right: 1px solid #e0e0e0; }
+        .canvas-section:nth-child(even) { border-left: 1px solid #e0e0e0; }
+        .section-title { font-size: 18px; font-weight: 700; color: #667eea; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+        .section-title::before { content: "●"; font-size: 24px; }
+        .section-description { font-size: 13px; color: #6c757d; margin-bottom: 15px; font-style: italic; }
+        textarea { width: 100%; min-height: 120px; padding: 12px; border: 2px solid #e0e0e0; border-radius: 6px; font-family: inherit; font-size: 14px; resize: vertical; transition: border-color 0.3s; }
+        textarea:focus { outline: none; border-color: #667eea; }
+        .item-list { display: flex; flex-direction: column; gap: 10px; }
+        .item { background: #f8f9fa; padding: 12px; border-radius: 6px; border-left: 4px solid #667eea; transition: all 0.3s; }
+        .item:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .add-item-btn { margin-top: 10px; padding: 8px 16px; background: #e9ecef; border: 2px dashed #6c757d; border-radius: 6px; cursor: pointer; font-size: 13px; color: #495057; width: 100%; transition: all 0.3s; }
+        .add-item-btn:hover { background: #dee2e6; border-color: #495057; }
+        input[type="text"], input[type="file"] { width: 100%; padding: 8px 12px; border: 2px solid #e0e0e0; border-radius: 4px; font-size: 14px; margin-bottom: 8px; }
+        input[type="text"]:focus { outline: none; border-color: #667eea; }
+        input[type="file"] { display: none; }
+        select { padding: 6px 10px; border: 2px solid #e0e0e0; border-radius: 4px; font-size: 13px; }
+        .priority-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; margin-left: 8px; }
+        .priority-high { background: #fee; color: #c00; }
+        .priority-medium { background: #ffeaa7; color: #d63031; }
+        .priority-low { background: #e8f5e9; color: #2e7d32; }
+        .delete-btn { background: #dc3545; color: white; border: none; border-radius: 4px; width: 28px; height: 28px; font-size: 18px; cursor: pointer; transition: all 0.3s; }
+        .delete-btn:hover { background: #c82333; transform: scale(1.1); }
+        .matrix-container { margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 8px; display: none; }
+        .matrix-container.active { display: block; }
+        .matrix-grid { position: relative; width: 100%; height: 400px; background: white; border: 2px solid #667eea; border-radius: 8px; margin-top: 15px; }
+        .matrix-quadrant { position: absolute; border: 1px dashed #ccc; }
+        .matrix-quadrant.q1 { top: 0; right: 0; width: 50%; height: 50%; background: rgba(40, 167, 69, 0.1); }
+        .matrix-quadrant.q2 { top: 0; left: 0; width: 50%; height: 50%; background: rgba(255, 193, 7, 0.1); }
+        .matrix-quadrant.q3 { bottom: 0; left: 0; width: 50%; height: 50%; background: rgba(220, 53, 69, 0.1); }
+        .matrix-quadrant.q4 { bottom: 0; right: 0; width: 50%; height: 50%; background: rgba(108, 117, 125, 0.1); }
+        .matrix-item { position: absolute; background: #667eea; color: white; padding: 8px 12px; border-radius: 6px; font-size: 12px; cursor: move; transform: translate(-50%, -50%); box-shadow: 0 2px 8px rgba(0,0,0,0.2); white-space: nowrap; max-width: 150px; overflow: hidden; text-overflow: ellipsis; z-index: 10; }
+        .quadrant-labels { position: absolute; font-size: 11px; color: #6c757d; font-weight: 600; padding: 5px; text-align: center; }
+        .quadrant-labels.q1-label { top: 5px; right: 5px; }
+        .quadrant-labels.q2-label { top: 5px; left: 5px; }
+        .quadrant-labels.q3-label { bottom: 5px; left: 5px; }
+        .quadrant-labels.q4-label { bottom: 5px; right: 5px; }
+        .connections-container { margin: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; display: none; }
+        .connections-container.active { display: block; }
+        .connection-item { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; padding: 12px; background: white; border-radius: 6px; border-left: 4px solid #667eea; }
+        .connection-arrow { font-size: 20px; color: #667eea; }
+        .connection-select { flex: 1; padding: 8px; border: 2px solid #e0e0e0; border-radius: 4px; }
+        .toast { position: fixed; top: 20px; right: 20px; background: #28a745; color: white; padding: 15px 25px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); display: none; z-index: 1000; animation: slideIn 0.3s; }
+        @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .template-selector { margin: 20px 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 2px solid #e0e0e0; }
+        .template-selector h3 { margin-bottom: 15px; color: #495057; }
+        .template-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+        .toggle-section { margin: 20px 30px; display: flex; gap: 10px; flex-wrap: wrap; }
+        @media (max-width: 768px) {
+            .canvas-grid { grid-template-columns: 1fr; }
+            .lang-selector { position: static; margin-top: 10px; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="lang-selector">
+                <button class="lang-btn active" onclick="switchLanguage('it')" data-lang="it">🇮🇹 ITA</button>
+                <button class="lang-btn" onclick="switchLanguage('en')" data-lang="en">🇬🇧 ENG</button>
+            </div>
+            <h1 data-i18n="title">🎯 Product Discovery Canvas</h1>
+            <p data-i18n="subtitle">Framework interattivo con matrice 2x2, drag & drop e collegamenti visivi</p>
+        </div>
+
+        <div class="toolbar">
+            <button class="btn btn-primary" onclick="saveCanvas()"><span data-i18n="btn_save">💾 Salva</span></button>
+            <button class="btn btn-secondary" onclick="loadCanvas()"><span data-i18n="btn_restore">↩️ Ripristina</span></button>
+            <button class="btn btn-success" onclick="exportJSON()"><span data-i18n="btn_export_json">🧾 Esporta JSON</span></button>
+            <label class="btn btn-info" for="import-json" style="margin: 0; cursor: pointer;">
+                <span data-i18n="btn_import_json">📥 Importa JSON</span>
+                <input type="file" id="import-json" accept=".json" onchange="importJSON(event)">
+            </label>
+            <button class="btn btn-success" onclick="exportCSV()"><span data-i18n="btn_export_csv">📊 Esporta CSV</span></button>
+            <button class="btn btn-secondary" onclick="clearCanvas()"><span data-i18n="btn_reset">🗑️ Reset</span></button>
+            <div class="status-indicator"><span data-i18n="status_ready">✓ Pronto</span></div>
+        </div>
+
+        <div class="template-selector">
+            <h3 data-i18n="templates_title">Template pre-compilati:</h3>
+            <div class="template-buttons">
+                <button class="btn btn-secondary" onclick="loadTemplate('fintech')">💳 Fintech</button>
+                <button class="btn btn-secondary" onclick="loadTemplate('legaltech')">⚖️ Legal Tech</button>
+                <button class="btn btn-secondary" onclick="loadTemplate('saas')">☁️ SaaS B2B</button>
+            </div>
+        </div>
+
+        <div class="toggle-section">
+            <button class="btn btn-info" onclick="toggleMatrix()"><span data-i18n="btn_toggle_matrix">📊 Mostra/Nascondi Matrice</span></button>
+            <button class="btn btn-info" onclick="toggleConnections()"><span data-i18n="btn_toggle_connections">🔗 Mostra/Nascondi Collegamenti</span></button>
+        </div>
+
+        <div class="canvas-grid">
+            <div class="canvas-section">
+                <div class="section-title" data-i18n="section_outcome">Outcome (Obiettivo)</div>
+                <div class="section-description" data-i18n="desc_outcome">Obiettivo misurabile che il prodotto deve raggiungere</div>
+                <textarea id="outcome" data-i18n-placeholder="placeholder_outcome"></textarea>
+                <input type="text" id="stakeholders" data-i18n-placeholder="placeholder_stakeholders" style="margin-top: 10px;">
+            </div>
+
+            <div class="canvas-section">
+                <div class="section-title" data-i18n="section_personas">Users & Personas</div>
+                <div class="section-description" data-i18n="desc_personas">Chi sono gli utenti target</div>
+                <div id="personas-list" class="item-list"></div>
+                <button class="add-item-btn" onclick="addPersona()"><span data-i18n="btn_add_persona">+ Aggiungi Persona</span></button>
+            </div>
+
+            <div class="canvas-section">
+                <div class="section-title" data-i18n="section_opportunities">Opportunities (Opportunità)</div>
+                <div class="section-description" data-i18n="desc_opportunities">Problemi e bisogni emersi dalla ricerca</div>
+                <div id="opportunities-list" class="item-list"></div>
+                <button class="add-item-btn" onclick="addOpportunity()"><span data-i18n="btn_add_opportunity">+ Aggiungi Opportunità</span></button>
+            </div>
+
+            <div class="canvas-section">
+                <div class="section-title" data-i18n="section_jtbd">User Benefits (JTBD)</div>
+                <div class="section-description" data-i18n="desc_jtbd">Jobs To Be Done, cosa vogliono ottenere</div>
+                <textarea id="jtbd" data-i18n-placeholder="placeholder_jtbd"></textarea>
+            </div>
+
+            <div class="canvas-section">
+                <div class="section-title" data-i18n="section_solutions">Solutions (Soluzioni)</div>
+                <div class="section-description" data-i18n="desc_solutions">Idee di feature per affrontare le opportunità</div>
+                <div id="solutions-list" class="item-list"></div>
+                <button class="add-item-btn" onclick="addSolution()"><span data-i18n="btn_add_solution">+ Aggiungi Soluzione</span></button>
+
+                <div class="matrix-container" id="matrix-container">
+                    <h4 data-i18n="matrix_title">Matrice Impact vs Effort</h4>
+                    <div class="matrix-grid" id="matrix-grid">
+                        <div class="matrix-quadrant q1"></div>
+                        <div class="matrix-quadrant q2"></div>
+                        <div class="matrix-quadrant q3"></div>
+                        <div class="matrix-quadrant q4"></div>
+                        <div class="quadrant-labels q1-label" data-i18n="matrix_q1">High Impact<br>Low Effort</div>
+                        <div class="quadrant-labels q2-label" data-i18n="matrix_q2">High Impact<br>High Effort</div>
+                        <div class="quadrant-labels q3-label" data-i18n="matrix_q3">Low Impact<br>High Effort</div>
+                        <div class="quadrant-labels q4-label" data-i18n="matrix_q4">Low Impact<br>Low Effort</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="canvas-section">
+                <div class="section-title" data-i18n="section_assumptions">Assumptions (Assunzioni)</div>
+                <div class="section-description" data-i18n="desc_assumptions">Ipotesi da validare prima di investire</div>
+                <div id="assumptions-list" class="item-list"></div>
+                <button class="add-item-btn" onclick="addAssumption()"><span data-i18n="btn_add_assumption">+ Aggiungi Assunzione</span></button>
+            </div>
+
+            <div class="canvas-section">
+                <div class="section-title" data-i18n="section_experiments">Experiments (Esperimenti)</div>
+                <div class="section-description" data-i18n="desc_experiments">Test concreti per validare assunzioni</div>
+                <div id="experiments-list" class="item-list"></div>
+                <button class="add-item-btn" onclick="addExperiment()"><span data-i18n="btn_add_experiment">+ Aggiungi Esperimento</span></button>
+            </div>
+
+            <div class="canvas-section">
+                <div class="section-title" data-i18n="section_metrics">Success Metrics</div>
+                <div class="section-description" data-i18n="desc_metrics">Come misurare se il prodotto funziona</div>
+                <textarea id="metrics" data-i18n-placeholder="placeholder_metrics"></textarea>
+            </div>
+        </div>
+
+        <div class="connections-container" id="connections-container">
+            <h3 data-i18n="connections_title">🔗 Collegamenti Opportunità → Soluzioni → Esperimenti</h3>
+            <div id="connections-list"></div>
+            <button class="add-item-btn" onclick="addConnection()"><span data-i18n="btn_add_connection">+ Aggiungi Collegamento</span></button>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const translations = {
+            it: {
+                title: "🎯 Product Discovery Canvas",
+                subtitle: "Framework interattivo con matrice 2x2, drag & drop e collegamenti visivi",
+                btn_save: "💾 Salva",
+                btn_restore: "↩️ Ripristina",
+                btn_export_json: "🧾 Esporta JSON",
+                btn_import_json: "📥 Importa JSON",
+                btn_export_csv: "📊 Esporta CSV",
+                btn_reset: "🗑️ Reset",
+                status_ready: "✓ Pronto",
+                templates_title: "Template pre-compilati:",
+                btn_toggle_matrix: "📊 Mostra/Nascondi Matrice",
+                btn_toggle_connections: "🔗 Mostra/Nascondi Collegamenti",
+                section_outcome: "Outcome (Obiettivo)",
+                desc_outcome: "Obiettivo misurabile che il prodotto deve raggiungere",
+                placeholder_outcome: "Es: Aumentare retention del 20% in 6 mesi",
+                placeholder_stakeholders: "Stakeholder coinvolti",
+                section_personas: "Users & Personas",
+                desc_personas: "Chi sono gli utenti target",
+                btn_add_persona: "+ Aggiungi Persona",
+                section_opportunities: "Opportunities (Opportunità)",
+                desc_opportunities: "Problemi e bisogni emersi dalla ricerca",
+                btn_add_opportunity: "+ Aggiungi Opportunità",
+                section_jtbd: "User Benefits (JTBD)",
+                desc_jtbd: "Jobs To Be Done, cosa vogliono ottenere",
+                placeholder_jtbd: "Quando [situazione], voglio [azione], così che [risultato]",
+                section_solutions: "Solutions (Soluzioni)",
+                desc_solutions: "Idee di feature per affrontare le opportunità",
+                btn_add_solution: "+ Aggiungi Soluzione",
+                matrix_title: "Matrice Impact vs Effort",
+                matrix_q1: "High Impact<br>Low Effort",
+                matrix_q2: "High Impact<br>High Effort",
+                matrix_q3: "Low Impact<br>High Effort",
+                matrix_q4: "Low Impact<br>Low Effort",
+                section_assumptions: "Assumptions (Assunzioni)",
+                desc_assumptions: "Ipotesi da validare prima di investire",
+                btn_add_assumption: "+ Aggiungi Assunzione",
+                section_experiments: "Experiments (Esperimenti)",
+                desc_experiments: "Test concreti per validare assunzioni",
+                btn_add_experiment: "+ Aggiungi Esperimento",
+                section_metrics: "Success Metrics",
+                desc_metrics: "Come misurare se il prodotto funziona",
+                placeholder_metrics: "KPI principali e target attesi",
+                connections_title: "🔗 Collegamenti Opportunità → Soluzioni → Esperimenti",
+                btn_add_connection: "+ Aggiungi Collegamento",
+                toast_saved: "✅ Canvas salvato!",
+                toast_loaded: "✅ Canvas caricato!",
+                toast_exported: "📥 Esportato!",
+                toast_imported: "📥 Importato!",
+                toast_reset: "🗑️ Reset completato",
+                confirm_delete: "Vuoi davvero eliminare?",
+                confirm_reset: "Vuoi davvero resettare tutto?"
+            },
+            en: {
+                title: "🎯 Product Discovery Canvas",
+                subtitle: "Interactive framework with 2x2 matrix, drag & drop and visual connections",
+                btn_save: "💾 Save",
+                btn_restore: "↩️ Restore",
+                btn_export_json: "🧾 Export JSON",
+                btn_import_json: "📥 Import JSON",
+                btn_export_csv: "📊 Export CSV",
+                btn_reset: "🗑️ Reset",
+                status_ready: "✓ Ready",
+                templates_title: "Pre-filled templates:",
+                btn_toggle_matrix: "📊 Show/Hide Matrix",
+                btn_toggle_connections: "🔗 Show/Hide Connections",
+                section_outcome: "Outcome (Goal)",
+                desc_outcome: "Measurable goal the product must achieve",
+                placeholder_outcome: "E.g.: Increase retention by 20% in 6 months",
+                placeholder_stakeholders: "Involved stakeholders",
+                section_personas: "Users & Personas",
+                desc_personas: "Who are the target users",
+                btn_add_persona: "+ Add Persona",
+                section_opportunities: "Opportunities",
+                desc_opportunities: "Problems and needs from research",
+                btn_add_opportunity: "+ Add Opportunity",
+                section_jtbd: "User Benefits (JTBD)",
+                desc_jtbd: "Jobs To Be Done, what they want to achieve",
+                placeholder_jtbd: "When [situation], I want [action], so that [outcome]",
+                section_solutions: "Solutions",
+                desc_solutions: "Feature ideas to address opportunities",
+                btn_add_solution: "+ Add Solution",
+                matrix_title: "Impact vs Effort Matrix",
+                matrix_q1: "High Impact<br>Low Effort",
+                matrix_q2: "High Impact<br>High Effort",
+                matrix_q3: "Low Impact<br>High Effort",
+                matrix_q4: "Low Impact<br>Low Effort",
+                section_assumptions: "Assumptions",
+                desc_assumptions: "Hypotheses to validate before investing",
+                btn_add_assumption: "+ Add Assumption",
+                section_experiments: "Experiments",
+                desc_experiments: "Concrete tests to validate assumptions",
+                btn_add_experiment: "+ Add Experiment",
+                section_metrics: "Success Metrics",
+                desc_metrics: "How to measure if the product works",
+                placeholder_metrics: "Key KPIs and expected targets",
+                connections_title: "🔗 Connections Opportunities → Solutions → Experiments",
+                btn_add_connection: "+ Add Connection",
+                toast_saved: "✅ Canvas saved!",
+                toast_loaded: "✅ Canvas loaded!",
+                toast_exported: "📥 Exported!",
+                toast_imported: "📥 Imported!",
+                toast_reset: "🗑️ Reset complete",
+                confirm_delete: "Do you really want to delete?",
+                confirm_reset: "Do you really want to reset everything?"
+            }
+        };
+
+        let currentLang = localStorage.getItem('canvasLanguage') || 'it';
+        let canvasData = { personas: [], opportunities: [], solutions: [], assumptions: [], experiments: [], connections: [] };
+
+        function t(key) { return translations[currentLang][key] || key; }
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function escapeAttr(value) {
+            return escapeHtml(value);
+        }
+
+        function toIntOrNull(value) {
+            const parsed = Number.parseInt(value, 10);
+            return Number.isNaN(parsed) ? null : parsed;
+        }
+
+        function csvEscape(value) {
+            const text = String(value ?? '');
+            return `"${text.replace(/"/g, '""')}"`;
+        }
+
+        function switchLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('canvasLanguage', lang);
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === lang);
+            });
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.dataset.i18n;
+                if (key.includes('matrix_q')) {
+                    el.innerHTML = t(key);
+                } else {
+                    el.textContent = t(key);
+                }
+            });
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                el.placeholder = t(el.dataset.i18nPlaceholder);
+            });
+            renderPersonas();
+            renderOpportunities();
+            renderSolutions();
+            renderAssumptions();
+            renderExperiments();
+            renderConnections();
+        }
+
+        function showToast(key) {
+            const toast = document.getElementById('toast');
+            toast.textContent = t(key);
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        }
+
+        function addPersona() {
+            canvasData.personas.push({ id: Date.now(), name: '', segment: '', painpoints: '' });
+            renderPersonas();
+        }
+
+        function renderPersonas() {
+            const list = document.getElementById('personas-list');
+            list.innerHTML = canvasData.personas.map(p => `
+                <div class="item">
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                        <input type="text" placeholder="${currentLang === 'it' ? 'Nome persona' : 'Persona name'}" value="${escapeAttr(p.name)}" onchange="updatePersona(${p.id}, 'name', this.value)" style="flex: 1;">
+                        <button class="delete-btn" onclick="deletePersona(${p.id})">×</button>
+                    </div>
+                    <input type="text" placeholder="${currentLang === 'it' ? 'Segmento' : 'Segment'}" value="${escapeAttr(p.segment)}" onchange="updatePersona(${p.id}, 'segment', this.value)">
+                    <input type="text" placeholder="Pain points" value="${escapeAttr(p.painpoints)}" onchange="updatePersona(${p.id}, 'painpoints', this.value)">
+                </div>
+            `).join('');
+        }
+
+        function updatePersona(id, field, value) {
+            const p = canvasData.personas.find(x => x.id === id);
+            if (p) p[field] = value;
+        }
+
+        function deletePersona(id) {
+            if (confirm(t('confirm_delete'))) {
+                canvasData.personas = canvasData.personas.filter(p => p.id !== id);
+                renderPersonas();
+            }
+        }
+
+        function addOpportunity() {
+            canvasData.opportunities.push({ id: Date.now(), text: '', priority: 'medium' });
+            renderOpportunities();
+        }
+
+        function renderOpportunities() {
+            const list = document.getElementById('opportunities-list');
+            const priorityLabels = currentLang === 'it' ? { high: 'Alta', medium: 'Media', low: 'Bassa' } : { high: 'High', medium: 'Medium', low: 'Low' };
+            list.innerHTML = canvasData.opportunities.map(o => `
+                <div class="item">
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                        <input type="text" placeholder="${currentLang === 'it' ? 'Opportunità' : 'Opportunity'}" value="${escapeAttr(o.text)}" onchange="updateOpportunity(${o.id}, 'text', this.value)" style="flex: 1;">
+                        <button class="delete-btn" onclick="deleteOpportunity(${o.id})">×</button>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <select onchange="updateOpportunity(${o.id}, 'priority', this.value)">
+                            <option value="high" ${o.priority === 'high' ? 'selected' : ''}>${priorityLabels.high}</option>
+                            <option value="medium" ${o.priority === 'medium' ? 'selected' : ''}>${priorityLabels.medium}</option>
+                            <option value="low" ${o.priority === 'low' ? 'selected' : ''}>${priorityLabels.low}</option>
+                        </select>
+                        <span class="priority-badge priority-${o.priority}">${o.priority.toUpperCase()}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateOpportunity(id, field, value) {
+            const o = canvasData.opportunities.find(x => x.id === id);
+            if (o) {
+                o[field] = value;
+                if (field === 'priority') renderOpportunities();
+            }
+        }
+
+        function deleteOpportunity(id) {
+            if (confirm(t('confirm_delete'))) {
+                canvasData.opportunities = canvasData.opportunities.filter(o => o.id !== id);
+                renderOpportunities();
+            }
+        }
+
+        function addSolution() {
+            canvasData.solutions.push({ id: Date.now(), name: '', description: '', effort: 'M', impact: 'medium', matrixX: 50, matrixY: 50 });
+            renderSolutions();
+        }
+
+        function renderSolutions() {
+            const list = document.getElementById('solutions-list');
+            const impactLabels = currentLang === 'it' ? { low: 'Basso', medium: 'Medio', high: 'Alto' } : { low: 'Low', medium: 'Medium', high: 'High' };
+            list.innerHTML = canvasData.solutions.map(s => `
+                <div class="item">
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                        <input type="text" placeholder="${currentLang === 'it' ? 'Nome soluzione' : 'Solution name'}" value="${escapeAttr(s.name)}" onchange="updateSolution(${s.id}, 'name', this.value)" style="flex: 1;">
+                        <button class="delete-btn" onclick="deleteSolution(${s.id})">×</button>
+                    </div>
+                    <input type="text" placeholder="${currentLang === 'it' ? 'Descrizione' : 'Description'}" value="${escapeAttr(s.description)}" onchange="updateSolution(${s.id}, 'description', this.value)">
+                    <div style="display: flex; gap: 10px; margin-top: 8px;">
+                        <select onchange="updateSolution(${s.id}, 'effort', this.value)">
+                            <option value="S" ${s.effort === 'S' ? 'selected' : ''}>Effort: S</option>
+                            <option value="M" ${s.effort === 'M' ? 'selected' : ''}>Effort: M</option>
+                            <option value="L" ${s.effort === 'L' ? 'selected' : ''}>Effort: L</option>
+                        </select>
+                        <select onchange="updateSolution(${s.id}, 'impact', this.value)">
+                            <option value="low" ${s.impact === 'low' ? 'selected' : ''}>Impact: ${impactLabels.low}</option>
+                            <option value="medium" ${s.impact === 'medium' ? 'selected' : ''}>Impact: ${impactLabels.medium}</option>
+                            <option value="high" ${s.impact === 'high' ? 'selected' : ''}>Impact: ${impactLabels.high}</option>
+                        </select>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateSolution(id, field, value) {
+            const s = canvasData.solutions.find(x => x.id === id);
+            if (s) {
+                s[field] = value;
+                if (field === 'effort' || field === 'impact') {
+                    s.manuallyPositioned = false;
+                }
+                renderMatrix();
+            }
+        }
+
+        function deleteSolution(id) {
+            if (confirm(t('confirm_delete'))) {
+                canvasData.solutions = canvasData.solutions.filter(s => s.id !== id);
+                renderSolutions();
+                renderMatrix();
+            }
+        }
+
+        function toggleMatrix() {
+            document.getElementById('matrix-container').classList.toggle('active');
+            if (document.getElementById('matrix-container').classList.contains('active')) {
+                setTimeout(() => renderMatrix(), 100);
+            }
+        }
+
+        function renderMatrix() {
+            const grid = document.getElementById('matrix-grid');
+            if (!grid) return;
+            grid.querySelectorAll('.matrix-item').forEach(i => i.remove());
+            const em = { 'S': 25, 'M': 50, 'L': 75 };
+            const im = { 'high': 25, 'medium': 50, 'low': 75 };
+            canvasData.solutions.filter(s => s.name).forEach(s => {
+                const hasCustomPosition = Number.isFinite(Number(s.matrixX)) && Number.isFinite(Number(s.matrixY)) && s.manuallyPositioned;
+                if (!hasCustomPosition) {
+                    s.matrixX = em[s.effort] || 50;
+                    s.matrixY = im[s.impact] || 50;
+                }
+                const item = document.createElement('div');
+                item.className = 'matrix-item';
+                item.textContent = s.name;
+                item.style.left = s.matrixX + '%';
+                item.style.top = s.matrixY + '%';
+                grid.appendChild(item);
+                enableMatrixDrag(item, grid, s);
+            });
+        }
+
+        function clamp(value, min, max) {
+            return Math.min(max, Math.max(min, value));
+        }
+
+        function updateSolutionMatrixPosition(solution, grid, clientX, clientY) {
+            const rect = grid.getBoundingClientRect();
+            const x = ((clientX - rect.left) / rect.width) * 100;
+            const y = ((clientY - rect.top) / rect.height) * 100;
+            solution.matrixX = clamp(x, 2, 98);
+            solution.matrixY = clamp(y, 2, 98);
+            solution.manuallyPositioned = true;
+        }
+
+        function enableMatrixDrag(item, grid, solution) {
+            item.addEventListener('pointerdown', (event) => {
+                event.preventDefault();
+                item.setPointerCapture?.(event.pointerId);
+
+                const onPointerMove = (moveEvent) => {
+                    updateSolutionMatrixPosition(solution, grid, moveEvent.clientX, moveEvent.clientY);
+                    item.style.left = solution.matrixX + '%';
+                    item.style.top = solution.matrixY + '%';
+                };
+
+                const onPointerUp = () => {
+                    window.removeEventListener('pointermove', onPointerMove);
+                    window.removeEventListener('pointerup', onPointerUp);
+                    window.removeEventListener('pointercancel', onPointerUp);
+                    item.releasePointerCapture?.(event.pointerId);
+                };
+
+                window.addEventListener('pointermove', onPointerMove);
+                window.addEventListener('pointerup', onPointerUp);
+                window.addEventListener('pointercancel', onPointerUp);
+            });
+        }
+
+        function addAssumption() {
+            canvasData.assumptions.push({ id: Date.now(), text: '', risk: 'medium', type: 'desirability' });
+            renderAssumptions();
+        }
+
+        function renderAssumptions() {
+            const list = document.getElementById('assumptions-list');
+            const riskLabels = currentLang === 'it' ? { critical: 'Critico', high: 'Alto', medium: 'Medio', low: 'Basso' } : { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low' };
+            list.innerHTML = canvasData.assumptions.map(a => `
+                <div class="item">
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                        <input type="text" placeholder="${currentLang === 'it' ? 'Assunzione' : 'Assumption'}" value="${escapeAttr(a.text)}" onchange="updateAssumption(${a.id}, 'text', this.value)" style="flex: 1;">
+                        <button class="delete-btn" onclick="deleteAssumption(${a.id})">×</button>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <select onchange="updateAssumption(${a.id}, 'type', this.value)">
+                            <option value="desirability" ${a.type === 'desirability' ? 'selected' : ''}>Desirability</option>
+                            <option value="feasibility" ${a.type === 'feasibility' ? 'selected' : ''}>Feasibility</option>
+                            <option value="viability" ${a.type === 'viability' ? 'selected' : ''}>Viability</option>
+                        </select>
+                        <select onchange="updateAssumption(${a.id}, 'risk', this.value)">
+                            <option value="critical" ${a.risk === 'critical' ? 'selected' : ''}>${riskLabels.critical}</option>
+                            <option value="high" ${a.risk === 'high' ? 'selected' : ''}>${riskLabels.high}</option>
+                            <option value="medium" ${a.risk === 'medium' ? 'selected' : ''}>${riskLabels.medium}</option>
+                            <option value="low" ${a.risk === 'low' ? 'selected' : ''}>${riskLabels.low}</option>
+                        </select>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateAssumption(id, field, value) {
+            const a = canvasData.assumptions.find(x => x.id === id);
+            if (a) a[field] = value;
+        }
+
+        function deleteAssumption(id) {
+            if (confirm(t('confirm_delete'))) {
+                canvasData.assumptions = canvasData.assumptions.filter(a => a.id !== id);
+                renderAssumptions();
+            }
+        }
+
+        function addExperiment() {
+            canvasData.experiments.push({ id: Date.now(), name: '', method: '', duration: '', success: '' });
+            renderExperiments();
+        }
+
+        function renderExperiments() {
+            const list = document.getElementById('experiments-list');
+            list.innerHTML = canvasData.experiments.map(e => `
+                <div class="item">
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                        <input type="text" placeholder="${currentLang === 'it' ? 'Nome esperimento' : 'Experiment name'}" value="${escapeAttr(e.name)}" onchange="updateExperiment(${e.id}, 'name', this.value)" style="flex: 1;">
+                        <button class="delete-btn" onclick="deleteExperiment(${e.id})">×</button>
+                    </div>
+                    <input type="text" placeholder="${currentLang === 'it' ? 'Metodo' : 'Method'}" value="${escapeAttr(e.method)}" onchange="updateExperiment(${e.id}, 'method', this.value)">
+                    <input type="text" placeholder="${currentLang === 'it' ? 'Durata' : 'Duration'}" value="${escapeAttr(e.duration)}" onchange="updateExperiment(${e.id}, 'duration', this.value)">
+                    <input type="text" placeholder="${currentLang === 'it' ? 'Criteri successo' : 'Success criteria'}" value="${escapeAttr(e.success)}" onchange="updateExperiment(${e.id}, 'success', this.value)">
+                </div>
+            `).join('');
+        }
+
+        function updateExperiment(id, field, value) {
+            const e = canvasData.experiments.find(x => x.id === id);
+            if (e) e[field] = value;
+        }
+
+        function deleteExperiment(id) {
+            if (confirm(t('confirm_delete'))) {
+                canvasData.experiments = canvasData.experiments.filter(e => e.id !== id);
+                renderExperiments();
+            }
+        }
+
+        function toggleConnections() {
+            document.getElementById('connections-container').classList.toggle('active');
+            if (document.getElementById('connections-container').classList.contains('active')) renderConnections();
+        }
+
+        function addConnection() {
+            canvasData.connections.push({ id: Date.now(), opportunityId: null, solutionId: null, experimentId: null });
+            renderConnections();
+        }
+
+        function renderConnections() {
+            const list = document.getElementById('connections-list');
+            if (!list) return;
+            const selectOpp = currentLang === 'it' ? 'Seleziona Opportunità' : 'Select Opportunity';
+            const selectSol = currentLang === 'it' ? 'Seleziona Soluzione' : 'Select Solution';
+            const selectExp = currentLang === 'it' ? 'Seleziona Esperimento' : 'Select Experiment';
+            list.innerHTML = canvasData.connections.map(c => {
+                const oppOpts = canvasData.opportunities.map(o => `<option value="${o.id}" ${c.opportunityId === o.id ? 'selected' : ''}>${escapeHtml(o.text || 'N/A')}</option>`).join('');
+                const solOpts = canvasData.solutions.map(s => `<option value="${s.id}" ${c.solutionId === s.id ? 'selected' : ''}>${escapeHtml(s.name || 'N/A')}</option>`).join('');
+                const expOpts = canvasData.experiments.map(e => `<option value="${e.id}" ${c.experimentId === e.id ? 'selected' : ''}>${escapeHtml(e.name || 'N/A')}</option>`).join('');
+                return `
+                    <div class="connection-item">
+                        <select class="connection-select" onchange="updateConnection(${c.id}, 'opportunityId', toIntOrNull(this.value))">
+                            <option value="">${selectOpp}</option>${oppOpts}
+                        </select>
+                        <span class="connection-arrow">→</span>
+                        <select class="connection-select" onchange="updateConnection(${c.id}, 'solutionId', toIntOrNull(this.value))">
+                            <option value="">${selectSol}</option>${solOpts}
+                        </select>
+                        <span class="connection-arrow">→</span>
+                        <select class="connection-select" onchange="updateConnection(${c.id}, 'experimentId', toIntOrNull(this.value))">
+                            <option value="">${selectExp}</option>${expOpts}
+                        </select>
+                        <button class="delete-btn" onclick="deleteConnection(${c.id})">×</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateConnection(id, field, value) {
+            const c = canvasData.connections.find(x => x.id === id);
+            if (c) c[field] = value;
+        }
+
+        function deleteConnection(id) {
+            if (confirm(t('confirm_delete'))) {
+                canvasData.connections = canvasData.connections.filter(c => c.id !== id);
+                renderConnections();
+            }
+        }
+
+        function saveCanvas() {
+            const data = {
+                ...canvasData,
+                outcome: document.getElementById('outcome').value,
+                stakeholders: document.getElementById('stakeholders').value,
+                jtbd: document.getElementById('jtbd').value,
+                metrics: document.getElementById('metrics').value,
+                savedAt: new Date().toISOString()
+            };
+            localStorage.setItem('productDiscoveryCanvas', JSON.stringify(data));
+            showToast('toast_saved');
+        }
+
+        function loadCanvas() {
+            const saved = localStorage.getItem('productDiscoveryCanvas');
+            if (saved) {
+                const data = JSON.parse(saved);
+                canvasData = {
+                    personas: data.personas || [],
+                    opportunities: data.opportunities || [],
+                    solutions: data.solutions || [],
+                    assumptions: data.assumptions || [],
+                    experiments: data.experiments || [],
+                    connections: data.connections || []
+                };
+                document.getElementById('outcome').value = data.outcome || '';
+                document.getElementById('stakeholders').value = data.stakeholders || '';
+                document.getElementById('jtbd').value = data.jtbd || '';
+                document.getElementById('metrics').value = data.metrics || '';
+                renderPersonas();
+                renderOpportunities();
+                renderSolutions();
+                renderAssumptions();
+                renderExperiments();
+                renderConnections();
+                showToast('toast_loaded');
+            }
+        }
+
+        function clearCanvas() {
+            if (confirm(t('confirm_reset'))) {
+                canvasData = { personas: [], opportunities: [], solutions: [], assumptions: [], experiments: [], connections: [] };
+                document.getElementById('outcome').value = '';
+                document.getElementById('stakeholders').value = '';
+                document.getElementById('jtbd').value = '';
+                document.getElementById('metrics').value = '';
+                renderPersonas();
+                renderOpportunities();
+                renderSolutions();
+                renderAssumptions();
+                renderExperiments();
+                renderConnections();
+                showToast('toast_reset');
+            }
+        }
+
+        function exportJSON() {
+            const data = {
+                ...canvasData,
+                outcome: document.getElementById('outcome').value,
+                stakeholders: document.getElementById('stakeholders').value,
+                jtbd: document.getElementById('jtbd').value,
+                metrics: document.getElementById('metrics').value
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'canvas-' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+            showToast('toast_exported');
+        }
+
+        function importJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    canvasData = {
+                        personas: data.personas || [],
+                        opportunities: data.opportunities || [],
+                        solutions: data.solutions || [],
+                        assumptions: data.assumptions || [],
+                        experiments: data.experiments || [],
+                        connections: data.connections || []
+                    };
+                    document.getElementById('outcome').value = data.outcome || '';
+                    document.getElementById('stakeholders').value = data.stakeholders || '';
+                    document.getElementById('jtbd').value = data.jtbd || '';
+                    document.getElementById('metrics').value = data.metrics || '';
+                    renderPersonas();
+                    renderOpportunities();
+                    renderSolutions();
+                    renderAssumptions();
+                    renderExperiments();
+                    renderConnections();
+                    showToast('toast_imported');
+                } catch {
+                    alert(currentLang === 'it' ? 'File JSON non valido' : 'Invalid JSON file');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function exportCSV() {
+            const data = {
+                ...canvasData,
+                outcome: document.getElementById('outcome').value,
+                stakeholders: document.getElementById('stakeholders').value,
+                jtbd: document.getElementById('jtbd').value,
+                metrics: document.getElementById('metrics').value
+            };
+            const rows = [['Section', 'Field', 'Value']];
+            rows.push(['Outcome', 'Goal', data.outcome]);
+            rows.push(['Outcome', 'Stakeholders', data.stakeholders]);
+            data.personas.forEach((p, i) => {
+                rows.push([`Persona ${i + 1}`, 'Name', p.name]);
+                rows.push([`Persona ${i + 1}`, 'Segment', p.segment]);
+                rows.push([`Persona ${i + 1}`, 'Pain Points', p.painpoints]);
+            });
+            data.opportunities.forEach((o, i) => {
+                rows.push([`Opportunity ${i + 1}`, 'Text', o.text]);
+                rows.push([`Opportunity ${i + 1}`, 'Priority', o.priority]);
+            });
+            rows.push(['JTBD', 'Jobs To Be Done', data.jtbd]);
+            data.solutions.forEach((s, i) => {
+                rows.push([`Solution ${i + 1}`, 'Name', s.name]);
+                rows.push([`Solution ${i + 1}`, 'Description', s.description]);
+                rows.push([`Solution ${i + 1}`, 'Effort', s.effort]);
+                rows.push([`Solution ${i + 1}`, 'Impact', s.impact]);
+            });
+            data.assumptions.forEach((a, i) => {
+                rows.push([`Assumption ${i + 1}`, 'Text', a.text]);
+                rows.push([`Assumption ${i + 1}`, 'Type', a.type]);
+                rows.push([`Assumption ${i + 1}`, 'Risk', a.risk]);
+            });
+            data.experiments.forEach((e, i) => {
+                rows.push([`Experiment ${i + 1}`, 'Name', e.name]);
+                rows.push([`Experiment ${i + 1}`, 'Method', e.method]);
+                rows.push([`Experiment ${i + 1}`, 'Duration', e.duration]);
+                rows.push([`Experiment ${i + 1}`, 'Success', e.success]);
+            });
+            rows.push(['Metrics', 'Success Metrics', data.metrics]);
+            const csv = rows.map((row) => row.map(csvEscape).join(',')).join('\n') + '\n';
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'canvas-' + new Date().toISOString().split('T')[0] + '.csv';
+            a.click();
+            showToast('toast_exported');
+        }
+
+        function loadTemplate(type) {
+            const templates = {
+                fintech: {
+                    outcome: 'Aumentare la conversion da signup a primo pagamento del 25% nei prossimi 3 mesi',
+                    stakeholders: 'Product Manager, Growth Team, Compliance',
+                    jtbd: 'Quando apro un conto corrente online, voglio completare KYC in meno di 5 minuti, così che posso iniziare a usare la carta immediatamente',
+                    metrics: 'Time to first transaction: da 48h a 10 minuti | Tasso completamento KYC: da 60% a 85% | NPS onboarding: da 40 a 65',
+                    personas: [{id: Date.now(), name: 'Laura, Freelance 32 anni', segment: 'Millennial con partita IVA, tech-savvy', painpoints: 'Documenti cartacei, tempi lunghi'}],
+                    opportunities: [{id: Date.now()+1, text: 'Processo KYC richiede troppi documenti e upload multipli', priority: 'high'}],
+                    solutions: [{id: Date.now()+2, name: 'OCR automatico per documento identità', description: 'Scan con camera smartphone + AI validation', effort: 'M', impact: 'high', matrixX: 35, matrixY: 20}],
+                    assumptions: [{id: Date.now()+3, text: 'Gli utenti preferiscono scan automatico rispetto a upload manuale foto', risk: 'high', type: 'desirability'}],
+                    experiments: [{id: Date.now()+4, name: 'Prototype test OCR con 20 utenti', method: 'Usability test su prototipo Figma', duration: '1 settimana', success: '>80% completano processo, <3 minuti tempo medio'}],
+                    connections: []
+                },
+                legaltech: {
+                    outcome: 'Ridurre il tempo di review contratti da 45 a 15 minuti per gli avvocati partner',
+                    stakeholders: 'Head of Legal, Partner Studio, IT',
+                    jtbd: 'Quando analizzo un contratto commerciale, voglio identificare automaticamente clausole rischiose, così che posso focalizzarmi solo sui punti critici',
+                    metrics: 'Tempo review: da 45 a 15 min | Clausole rischiose identificate: 95% accuracy | Adozione tool: 80% avvocati entro 2 mesi',
+                    personas: [{id: Date.now(), name: 'Marco, Senior Associate', segment: 'Avvocato 5+ anni esperienza, gestisce 20+ contratti/settimana', painpoints: 'Lettura ripetitiva, rischio di oversight, deadline stretti'}],
+                    opportunities: [{id: Date.now()+1, text: 'Avvocati perdono tempo su clausole standard invece di focalizzarsi su custom', priority: 'high'}],
+                    solutions: [{id: Date.now()+2, name: 'AI clause analyzer con highlight rischi', description: 'NLP per categorizzare clausole + risk scoring', effort: 'L', impact: 'high', matrixX: 75, matrixY: 25}],
+                    assumptions: [{id: Date.now()+3, text: 'Avvocati si fidano dei suggerimenti AI se spiegati con rationale', risk: 'critical', type: 'desirability'}],
+                    experiments: [{id: Date.now()+4, name: 'Pilot con 5 studi legali partner', method: 'Beta test 30 giorni con feedback settimanale', duration: '1 mese', success: 'NPS >50, 70% adozione daily use'}],
+                    connections: []
+                },
+                saas: {
+                    outcome: 'Aumentare MRR del 30% migliorando upsell da piano base a premium',
+                    stakeholders: 'VP Product, Customer Success, Sales',
+                    jtbd: 'Quando il mio team cresce oltre 10 persone, voglio funzionalità avanzate di permessi, così che posso delegare senza perdere controllo',
+                    metrics: 'Upgrade rate: da 8% a 15% | ARPU: da €49 a €75 | Time to upgrade: da 90 a 45 giorni',
+                    personas: [{id: Date.now(), name: 'Sofia, Operations Manager', segment: 'PMI 10-50 dipendenti, usa tool da 6+ mesi', painpoints: 'Limiti piano base bloccano crescita, non chiaro valore premium'}],
+                    opportunities: [{id: Date.now()+1, text: 'Utenti non capiscono quali feature premium risolverebbero i loro problemi', priority: 'high'}],
+                    solutions: [{id: Date.now()+2, name: 'In-app upgrade prompts contestuali', description: 'Mostra CTA upgrade quando utente raggiunge limite piano', effort: 'S', impact: 'medium', matrixX: 25, matrixY: 50}],
+                    assumptions: [{id: Date.now()+3, text: 'Utenti accettano di upgradare se vedono ROI immediato (es: sblocco team member)', risk: 'medium', type: 'viability'}],
+                    experiments: [{id: Date.now()+4, name: 'A/B test su prompt upgrade', method: 'A: no prompt | B: prompt contestuale | C: prompt + trial 14gg', duration: '3 settimane', success: 'Variant con >12% upgrade rate vince'}],
+                    connections: []
+                }
+            };
+            const template = templates[type];
+            if (template) {
+                document.getElementById('outcome').value = template.outcome;
+                document.getElementById('stakeholders').value = template.stakeholders;
+                document.getElementById('jtbd').value = template.jtbd;
+                document.getElementById('metrics').value = template.metrics;
+                canvasData.personas = template.personas;
+                canvasData.opportunities = template.opportunities;
+                canvasData.solutions = template.solutions;
+                canvasData.assumptions = template.assumptions;
+                canvasData.experiments = template.experiments;
+                canvasData.connections = template.connections;
+                renderPersonas();
+                renderOpportunities();
+                renderSolutions();
+                renderAssumptions();
+                renderExperiments();
+                renderConnections();
+                showToast('toast_loaded');
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            switchLanguage(currentLang);
+            const saved = localStorage.getItem('productDiscoveryCanvas');
+            if (saved) loadCanvas();
+        });
+    </script>
+</body>
+</html>
