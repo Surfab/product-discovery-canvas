@@ -6,6 +6,8 @@
 
 Designed for Product Managers, Product Owners, AI Product Leaders and Innovation Teams who want a structured, experiment-driven discovery workflow.
 
+🌍 Live demo: https://surfab.github.io/product-discovery-canvas/
+
 ![Screenshot](https://github.com/user-attachments/assets/d42e6d35-161f-4de8-a2c4-bed1d7d6c620)
 
 ## ✨ **Key Features**
