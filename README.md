@@ -10,7 +10,8 @@ Designed for Product Managers, Product Owners, AI Product Leaders and Innovation
 
 🌍 Live demo: https://surfab.github.io/product-discovery-canvas/
 
-![Screenshot](images/screenshot.png)
+<img width="2760" height="2328" alt="product_discovery_canvas" src="https://github.com/user-attachments/assets/41614cbf-4175-4210-a50b-9821bb05cb21" />
+
 
 ---
 
