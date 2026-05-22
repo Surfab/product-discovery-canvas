@@ -1,0 +1,136 @@
+{
+  "outcome": "Aumentare il repeat purchase rate dal 12% al 25% entro 6 mesi, incrementando il LTV medio del cliente del 40%",
+  "stakeholders": "Marketing (Sarah) — Growth e CRM\nData Science (Marco) — Modelli di raccomandazione\nEngineering — Integrazione API catalogo\nLegal — Compliance GDPR\nCX — Post-purchase experience",
+  "jtbd": "Quando ricevo il mio ordine, voglio scoprire prodotti che completano il mio acquisto, così da non dover cercare da capo su più siti.\n\nQuando sono soddisfatto di un acquisto, voglio sentirmi riconosciuto come cliente fedele, così da avere un motivo concreto per tornare.",
+  "metrics": "Repeat purchase rate (target: 12% → 25%)\nEmail CTR post-acquisto (target: 8% → 18%)\nLTV medio a 90 giorni (+40%)\nTime to second purchase (riduzione del 30%)\nChurn rate clienti one-time (-20%)",
+  "personas": [
+    {
+      "id": 1000000001,
+      "name": "Giulia, 31 anni — Fashion enthusiast",
+      "segment": "Donna 25-35, urban, acquista moda online 2-3x/mese, alto engagement social",
+      "painpoints": "Riceve email generiche non rilevanti. Non ricorda il sito dopo 2 settimane. Si sente 'solo un numero' — nessuna personalizzazione post-acquisto."
+    },
+    {
+      "id": 1000000002,
+      "name": "Andrea, 44 anni — Acquirente pragmatico",
+      "segment": "Uomo 40-50, compra per necessità specifica, bassa tolleranza per comunicazioni irrilevanti",
+      "painpoints": "Riceve troppe email. Vorrebbe essere avvisato solo su categorie che già acquista. Non capisce perché il sito non lo 'ricordi'."
+    }
+  ],
+  "opportunities": [
+    {
+      "id": 1000000010,
+      "text": "Email post-acquisto generiche con CTR 8% vs benchmark 18% — gap enorme da colmare con personalizzazione",
+      "priority": "high"
+    },
+    {
+      "id": 1000000011,
+      "text": "Assenza di follow-up intelligente nei 7 giorni post-acquisto — finestra di massimo engagement sprecata",
+      "priority": "high"
+    },
+    {
+      "id": 1000000012,
+      "text": "Nessuna sequenza di onboarding per nuovi clienti — 88% non torna entro 90 giorni",
+      "priority": "medium"
+    },
+    {
+      "id": 1000000013,
+      "text": "Dati comportamentali disponibili ma non usati per personalizzare homepage e catalogo",
+      "priority": "medium"
+    }
+  ],
+  "solutions": [
+    {
+      "id": 1000000020,
+      "name": "Post-purchase email engine",
+      "description": "Sequenza di 3 email personalizzate nei 7 giorni post-acquisto: conferma + raccomandazioni complementari (giorno 1), review request + upsell (giorno 3), offerta loyalty (giorno 7)",
+      "effort": "M",
+      "impact": "high",
+      "matrixX": 25,
+      "matrixY": 20
+    },
+    {
+      "id": 1000000021,
+      "name": "Recommendation widget in thank-you page",
+      "description": "Widget 'Completa il look' sulla pagina di conferma ordine, basato su collaborative filtering. Zero attrito — il cliente è già in stato post-acquisto positivo.",
+      "effort": "S",
+      "impact": "high",
+      "matrixX": 20,
+      "matrixY": 15
+    },
+    {
+      "id": 1000000022,
+      "name": "Loyalty tier leggero (Bronze / Silver / Gold)",
+      "description": "Sistema a punti semplice visibile in account e nelle email. Obiettivo: dare un incentivo esplicito a tornare. Nessuna app richiesta.",
+      "effort": "L",
+      "impact": "high",
+      "matrixX": 75,
+      "matrixY": 20
+    },
+    {
+      "id": 1000000023,
+      "name": "Homepage personalizzata per returning users",
+      "description": "Se l'utente è loggato e ha già acquistato, mostra la sezione 'Scelto per te' basata sullo storico. Solo per clienti returning.",
+      "effort": "M",
+      "impact": "medium",
+      "matrixX": 30,
+      "matrixY": 55
+    }
+  ],
+  "assumptions": [
+    {
+      "id": 1000000030,
+      "text": "I clienti sono disposti a ricevere email personalizzate nei 7 giorni post-acquisto senza aumentare il tasso di unsubscribe",
+      "type": "desirability",
+      "risk": "high"
+    },
+    {
+      "id": 1000000031,
+      "text": "Il modello di recommendation ha abbastanza dati per suggerimenti rilevanti anche al primo acquisto",
+      "type": "feasibility",
+      "risk": "critical"
+    },
+    {
+      "id": 1000000032,
+      "text": "Un loyalty leggero (punti) è sufficiente come incentivo al secondo acquisto senza sconti aggressivi",
+      "type": "viability",
+      "risk": "medium"
+    },
+    {
+      "id": 1000000033,
+      "text": "L'integrazione API del catalogo è compatibile con il recommendation engine senza refactoring maggiore",
+      "type": "feasibility",
+      "risk": "high"
+    }
+  ],
+  "experiments": [
+    {
+      "id": 1000000040,
+      "name": "A/B test email personalizzata vs generica",
+      "method": "A/B test su CRM — 50% nuovi clienti ricevono email personalizzata, 50% email standard attuale",
+      "duration": "3 settimane",
+      "success": "CTR email personalizzata ≥ 15% (vs 8% attuale). Unsubscribe rate non aumenta oltre +0.5%"
+    },
+    {
+      "id": 1000000041,
+      "name": "Pilot widget raccomandazioni in thank-you page",
+      "method": "Feature flag su 20% del traffico post-acquisto. Misura click e conversione entro 48h.",
+      "duration": "2 settimane",
+      "success": "≥ 5% dei clienti esposti clicca almeno un prodotto. Conversione aggiuntiva ≥ 2%."
+    }
+  ],
+  "connections": [
+    {
+      "id": 1000000050,
+      "opportunityId": 1000000010,
+      "solutionId": 1000000020,
+      "experimentId": 1000000040
+    },
+    {
+      "id": 1000000051,
+      "opportunityId": 1000000011,
+      "solutionId": 1000000021,
+      "experimentId": 1000000041
+    }
+  ]
+}
