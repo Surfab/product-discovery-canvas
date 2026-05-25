@@ -289,6 +289,17 @@ Each template includes: measurable outcome, 1–2 detailed personas, prioritized
 * Collaborative solution brainstorming
 * Export for project documentation (JSON, CSV, PDF, PNG)
 
+### **5. AI-assisted Discovery (Claude → Canvas)**
+Skip the blank canvas. After a meeting, describe what was discussed to Claude (even informal notes) and ask it to generate the canvas JSON. Then import it directly.
+
+**Flow:**
+1. Have your discovery meeting
+2. Write a short recap to Claude — no formal transcript needed, even 10 lines of rough notes work
+3. Claude extracts outcome, personas, opportunities, solutions, assumptions, experiments
+4. Import the JSON into the canvas — done
+
+> Example prompt: *"We discussed X, the main problem is Y, Marco proposed Z, the biggest risk is W — generate the canvas JSON."*
+
 ---
 
 ## 🎓 **Best Practices**
