@@ -46,6 +46,13 @@ function applyCanvasState(data) {
     syncIdCounter(canvasData);
 }
 
+// True se il canvas non contiene niente da perdere (usato prima di sovrascriverlo)
+function isCanvasEmpty(data) {
+    if (!data) return true;
+    return TOP_FIELDS.every(f => !String(data[f] || '').trim())
+        && COLL_NAMES.every(name => !(data[name] || []).length);
+}
+
 // Deep clone — lo stato è solo dati primitivi
 function snapshotState() {
     return JSON.parse(JSON.stringify(canvasData));

@@ -72,8 +72,8 @@ async function shareLink() {
     try {
         const enc = await encodeShare(canvasData);
         const url = location.origin + location.pathname + '#share=' + enc;
-        // Aggiorna anche la URL della finestra corrente (utile per refresh)
-        history.replaceState(null, '', '#share=' + enc);
+        // NON scrivere l'hash nella finestra corrente: al refresh ricaricherebbe
+        // questa istantanea sopra le modifiche fatte dopo la condivisione.
         const ok = await _copyToClipboard(url);
         if (ok) {
             showToast('toast_link_copied');
@@ -90,11 +90,25 @@ async function shareLink() {
 async function tryLoadFromHash() {
     const m = /#share=([^&]+)/.exec(location.hash);
     if (!m) return false;
+    // Rimuove subito l'hash: un refresh deve ripartire dal canvas salvato, non dal link
+    history.replaceState(null, '', location.pathname + location.search);
     const data = await decodeShare(m[1]);
     if (!data) { showToast('toast_share_invalid', true); return false; }
     const v = validateImportedData(data);
     if (!v.ok) { showToast('toast_share_invalid', true); return false; }
+    // Il canvas condiviso sostituisce quello locale: chiedi conferma se c'è lavoro salvato
+    if (!isCanvasEmpty(loadFromStorage())) {
+        const ok = await confirmDialog({
+            title: t('modal_share_title'),
+            message: t('modal_share_msg'),
+            confirmText: t('modal_share_confirm'),
+            cancelText: t('modal_share_keep'),
+            danger: true
+        });
+        if (!ok) return false;
+    }
     applyCanvasState(data);
+    saveCanvas(false);
     showToast('toast_share_loaded');
     return true;
 }

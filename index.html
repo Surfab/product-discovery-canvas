@@ -1388,6 +1388,13 @@ const translations = {
         modal_reset_msg: "Tutti i dati del canvas verranno cancellati. Procedere?",
         snackbar_deleted: "Elemento eliminato",
         snackbar_reset: "Canvas resettato",
+        snackbar_template_loaded: "Template caricato",
+        modal_template_title: "Caricare il template?",
+        modal_template_msg: "Il template sostituisce tutto il contenuto attuale del canvas. Potrai annullare per qualche secondo.",
+        modal_share_title: "Aprire il canvas condiviso?",
+        modal_share_msg: "Il canvas del link sostituirà quello salvato in questo browser. Se vuoi tenerlo, prima esportalo in JSON.",
+        modal_share_confirm: "Sostituisci",
+        modal_share_keep: "Tieni il mio",
         snackbar_undo: "ANNULLA",
         theme_label: "Cambia tema",
         btn_share: "Condividi",
@@ -1473,6 +1480,13 @@ const translations = {
         modal_reset_msg: "All canvas data will be erased. Proceed?",
         snackbar_deleted: "Item deleted",
         snackbar_reset: "Canvas reset",
+        snackbar_template_loaded: "Template loaded",
+        modal_template_title: "Load template?",
+        modal_template_msg: "The template replaces all current canvas content. You can undo for a few seconds.",
+        modal_share_title: "Open the shared canvas?",
+        modal_share_msg: "The canvas from the link will replace the one saved in this browser. To keep yours, export it to JSON first.",
+        modal_share_confirm: "Replace",
+        modal_share_keep: "Keep mine",
         snackbar_undo: "UNDO",
         theme_label: "Toggle theme",
         btn_share: "Share",
@@ -1549,6 +1563,13 @@ function applyCanvasState(data) {
     for (const name of COLL_NAMES) base[name] = Array.isArray(data[name]) ? data[name] : [];
     canvasData = base;
     syncIdCounter(canvasData);
+}
+
+// True se il canvas non contiene niente da perdere (usato prima di sovrascriverlo)
+function isCanvasEmpty(data) {
+    if (!data) return true;
+    return TOP_FIELDS.every(f => !String(data[f] || '').trim())
+        && COLL_NAMES.every(name => !(data[name] || []).length);
 }
 
 // Deep clone — lo stato è solo dati primitivi
@@ -2294,9 +2315,19 @@ const TEMPLATES = {
     }
 };
 
-function loadTemplate(type) {
+async function loadTemplate(type) {
     const tpl = TEMPLATES[type];
     if (!tpl) return;
+    // Il template sostituisce tutto il canvas: chiedi conferma se c'è lavoro in corso
+    if (!isCanvasEmpty(canvasData)) {
+        const ok = await confirmDialog({
+            title: t('modal_template_title'),
+            message: t('modal_template_msg'),
+            danger: true
+        });
+        if (!ok) return;
+    }
+    const snap = snapshotState();
     const cloned = emptyState();
     for (const f of TOP_FIELDS) cloned[f] = tpl[f] || '';
     for (const name of COLL_NAMES) {
@@ -2305,7 +2336,8 @@ function loadTemplate(type) {
     applyCanvasState(cloned);
     renderAll();
     scheduleAutosave();
-    showToast('toast_loaded');
+    if (isCanvasEmpty(snap)) showToast('toast_loaded');
+    else showUndoSnackbar('snackbar_template_loaded', snap);
 }
 // ─── src/js/matrix-png.js ───
 // Esporta la matrice Impact/Effort come immagine PNG renderizzata via Canvas2D.
@@ -2551,8 +2583,8 @@ async function shareLink() {
     try {
         const enc = await encodeShare(canvasData);
         const url = location.origin + location.pathname + '#share=' + enc;
-        // Aggiorna anche la URL della finestra corrente (utile per refresh)
-        history.replaceState(null, '', '#share=' + enc);
+        // NON scrivere l'hash nella finestra corrente: al refresh ricaricherebbe
+        // questa istantanea sopra le modifiche fatte dopo la condivisione.
         const ok = await _copyToClipboard(url);
         if (ok) {
             showToast('toast_link_copied');
@@ -2569,11 +2601,25 @@ async function shareLink() {
 async function tryLoadFromHash() {
     const m = /#share=([^&]+)/.exec(location.hash);
     if (!m) return false;
+    // Rimuove subito l'hash: un refresh deve ripartire dal canvas salvato, non dal link
+    history.replaceState(null, '', location.pathname + location.search);
     const data = await decodeShare(m[1]);
     if (!data) { showToast('toast_share_invalid', true); return false; }
     const v = validateImportedData(data);
     if (!v.ok) { showToast('toast_share_invalid', true); return false; }
+    // Il canvas condiviso sostituisce quello locale: chiedi conferma se c'è lavoro salvato
+    if (!isCanvasEmpty(loadFromStorage())) {
+        const ok = await confirmDialog({
+            title: t('modal_share_title'),
+            message: t('modal_share_msg'),
+            confirmText: t('modal_share_confirm'),
+            cancelText: t('modal_share_keep'),
+            danger: true
+        });
+        if (!ok) return false;
+    }
     applyCanvasState(data);
+    saveCanvas(false);
     showToast('toast_share_loaded');
     return true;
 }

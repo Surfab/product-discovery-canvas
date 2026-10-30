@@ -109,9 +109,19 @@ const TEMPLATES = {
     }
 };
 
-function loadTemplate(type) {
+async function loadTemplate(type) {
     const tpl = TEMPLATES[type];
     if (!tpl) return;
+    // Il template sostituisce tutto il canvas: chiedi conferma se c'è lavoro in corso
+    if (!isCanvasEmpty(canvasData)) {
+        const ok = await confirmDialog({
+            title: t('modal_template_title'),
+            message: t('modal_template_msg'),
+            danger: true
+        });
+        if (!ok) return;
+    }
+    const snap = snapshotState();
     const cloned = emptyState();
     for (const f of TOP_FIELDS) cloned[f] = tpl[f] || '';
     for (const name of COLL_NAMES) {
@@ -120,5 +130,6 @@ function loadTemplate(type) {
     applyCanvasState(cloned);
     renderAll();
     scheduleAutosave();
-    showToast('toast_loaded');
+    if (isCanvasEmpty(snap)) showToast('toast_loaded');
+    else showUndoSnackbar('snackbar_template_loaded', snap);
 }
