@@ -10,7 +10,7 @@ Designed for Product Managers, Product Owners, AI Product Leaders and Innovation
 
 🌍 Live demo: https://surfab.github.io/product-discovery-canvas/
 
-<img width="2760" height="2328" alt="product_discovery_canvas" src="https://github.com/user-attachments/assets/41614cbf-4175-4210-a50b-9821bb05cb21" />
+![Product Discovery Canvas](images/product_discovery_canvas.jpg)
 
 
 ---
@@ -38,7 +38,8 @@ Designed for Product Managers, Product Owners, AI Product Leaders and Innovation
 * New "Share" button in the toolbar
 * Canvas state compressed with gzip + base64-url, stored in the page hash (`#share=g.xxxxx…`)
 * ~60% compression vs plain JSON
-* On open, if a share hash is detected: state loads, schema is validated, confirmation toast appears
+* On open, if a share hash is detected: schema is validated and, if this browser already holds a saved canvas, you are asked whether to replace it or keep yours
+* The hash is removed after loading, so a refresh starts from your saved canvas
 
 ### 🎤 **Presentation Mode**
 
@@ -154,12 +155,7 @@ Each template includes: measurable outcome, 1–2 detailed personas, prioritized
 
 ### **Installation**
 
-```
-# No installation required — it is a standalone HTML file
-# Download index.html (or the fully offline standalone version)
-```
-
-**Offline version:** `Product Discovery Canvas (standalone).html` (~328 KB) — fonts embedded, zero external dependencies.
+No installation required. `index.html` is a single offline file (~300 KB, fonts embedded, zero external dependencies): download it and open it in your browser.
 
 ### **Basic Usage**
 
@@ -363,6 +359,13 @@ Each template includes: measurable outcome, 1–2 detailed personas, prioritized
 
 ## 📋 **Changelog**
 
+### v2.1.0 — October 2026
+* 🧱 Readable source code in `src/` (19 modules) + `build.mjs` to generate `index.html`
+* 🐛 Opening a share link no longer silently overwrites the canvas saved in your browser
+* 🐛 "Share" no longer writes the hash into the current URL (a refresh used to reload the old snapshot)
+* 🐛 Loading a template over a non-empty canvas now asks for confirmation, with undo
+* 📦 Merged duplicate `@font-face` blocks: `index.html` from 335 KB to ~300 KB
+
 ### v2.0.0 — May 2026
 * 🎨 Full UI redesign: neutral warm palette, indigo accent, Manrope + JetBrains Mono typography
 * 🐛 Fixed inverted quadrant labels on Impact/Effort matrix
@@ -387,10 +390,20 @@ Each template includes: measurable outcome, 1–2 detailed personas, prioritized
 
 ## 🤝 **Contributions**
 
-The canvas is a standalone file. To contribute:
+`index.html` is generated: don't edit it by hand. The source lives in `src/`:
 
-1. Edit `index.html`
-2. Test locally in your browser
+```
+src/
+├── index.html        # markup, loads the modules as separate <script> tags
+├── styles.css        # design system and layout
+├── fonts.css         # self-hosted Manrope + JetBrains Mono
+├── fonts/            # woff2 files
+└── js/               # 19 modules: state, persistence, validation, share, templates, ...
+build.mjs             # inlines CSS, fonts and modules into index.html
+```
+
+1. Edit the files in `src/` and test by opening `src/index.html` directly in your browser
+2. Run `node build.mjs` (Node 18+, no npm dependencies) to regenerate `index.html`
 3. Open a PR with a short description of the change
 
 ---
@@ -398,12 +411,12 @@ The canvas is a standalone file. To contribute:
 ## 📞 **Support**
 
 For questions or issues:
-* Open the file in a text editor for customization
+* Customize the files in `src/`, then run `node build.mjs`
 * Inspect browser console (F12) for debugging
 * All data is stored in browser localStorage
 
-**Version:** 2.0.0
-**Last update:** May 2026
+**Version:** 2.1.0
+**Last update:** October 2026
 **Author:** Fabrizio Quaglio Cotti
 
 🚀 **Enjoy! Suggestions are always welcome!**
