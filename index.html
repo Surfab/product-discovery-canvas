@@ -2315,8 +2315,115 @@ const TEMPLATES = {
     }
 };
 
+// Versione inglese dei template: stessa struttura, stessi enum e posizioni in matrice.
+// loadTemplate() sceglie in base alla lingua attiva.
+const TEMPLATES_EN = {
+    fintech: {
+        outcome: 'Increase signup-to-first-payment conversion by 25% in the next 3 months',
+        stakeholders: 'Product Manager, Growth Team, Compliance',
+        jtbd: 'When I open an online bank account, I want to complete KYC in under 5 minutes, so that I can start using my card right away',
+        metrics: 'Time to first transaction: from 48h to 10 minutes | KYC completion rate: from 60% to 85% | Onboarding NPS: from 40 to 65',
+        personas: [{ name: 'Laura, 32, freelancer', segment: 'Self-employed millennial, tech-savvy', painpoints: 'Paper documents, long processing times' }],
+        opportunities: [{ text: 'KYC asks for too many documents and multiple uploads', priority: 'high' }],
+        solutions: [{ name: 'Automatic ID document OCR', description: 'Smartphone camera scan + AI validation', effort: 'M', impact: 'high', matrixX: 35, matrixY: 20, manuallyPositioned: true }],
+        assumptions: [{ text: 'Users prefer automatic scanning over manually uploading photos', risk: 'high', type: 'desirability' }],
+        experiments: [{ name: 'OCR prototype test with 20 users', method: 'Usability test on a Figma prototype', duration: '1 week', success: '>80% complete the flow, <3 minutes on average' }],
+        connections: []
+    },
+    legaltech: {
+        outcome: 'Cut contract review time from 45 to 15 minutes for partner lawyers',
+        stakeholders: 'Head of Legal, Law Firm Partners, IT',
+        jtbd: 'When I review a commercial contract, I want risky clauses flagged automatically, so that I can focus only on the critical points',
+        metrics: 'Review time: from 45 to 15 min | Risky clauses detected: 95% accuracy | Tool adoption: 80% of lawyers within 2 months',
+        personas: [{ name: 'Marco, Senior Associate', segment: 'Lawyer with 5+ years of experience, handles 20+ contracts/week', painpoints: 'Repetitive reading, risk of oversight, tight deadlines' }],
+        opportunities: [{ text: 'Lawyers spend time on standard clauses instead of the custom ones', priority: 'high' }],
+        solutions: [{ name: 'AI clause analyzer with risk highlights', description: 'NLP to categorize clauses + risk scoring', effort: 'L', impact: 'high', matrixX: 75, matrixY: 25, manuallyPositioned: true }],
+        assumptions: [{ text: 'Lawyers trust AI suggestions when they come with a rationale', risk: 'critical', type: 'desirability' }],
+        experiments: [{ name: 'Pilot with 5 partner law firms', method: '30-day beta with weekly feedback', duration: '1 month', success: 'NPS >50, 70% daily adoption' }],
+        connections: []
+    },
+    saas: {
+        outcome: 'Grow MRR by 30% by improving upsell from the basic to the premium plan',
+        stakeholders: 'VP Product, Customer Success, Sales',
+        jtbd: 'When my team grows beyond 10 people, I want advanced permission features, so that I can delegate without losing control',
+        metrics: 'Upgrade rate: from 8% to 15% | ARPU: from €49 to €75 | Time to upgrade: from 90 to 45 days',
+        personas: [{ name: 'Sofia, Operations Manager', segment: 'SMB with 10-50 employees, using the tool for 6+ months', painpoints: 'Basic plan limits block growth, premium value is unclear' }],
+        opportunities: [{ text: 'Users don\'t understand which premium features would solve their problems', priority: 'high' }],
+        solutions: [{ name: 'Contextual in-app upgrade prompts', description: 'Show an upgrade CTA when the user hits a plan limit', effort: 'S', impact: 'medium', matrixX: 25, matrixY: 50, manuallyPositioned: true }],
+        assumptions: [{ text: 'Users accept to upgrade if they see an immediate ROI (e.g. unlocking a team member)', risk: 'medium', type: 'viability' }],
+        experiments: [{ name: 'A/B test on upgrade prompts', method: 'A: no prompt | B: contextual prompt | C: prompt + 14-day trial', duration: '3 weeks', success: 'Variant with >12% upgrade rate wins' }],
+        connections: []
+    },
+    ecommerce: {
+        outcome: 'Reduce cart abandonment by 15% by improving mobile checkout by Q3',
+        stakeholders: 'Head of E-commerce, UX Lead, CRO Team, Mobile Engineering',
+        jtbd: 'When I shop on my phone in spare moments, I want to pay in a few taps, so that I don\'t lose my cart when I switch context',
+        metrics: 'Cart abandonment: from 72% to 60% | Mobile conversion rate: from 1.8% to 2.8% | Average checkout time: from 3 min to 90 sec | Wallet payments: from 12% to 35%',
+        personas: [{ name: 'Giulia, 28 — Mobile shopper', segment: 'Millennial, shops during lunch break or on the couch', painpoints: 'Long checkouts, typing on forms, having to remember passwords' }],
+        opportunities: [
+            { text: 'Checkout form with too many required fields and a text keyboard where a numeric one is needed', priority: 'high' },
+            { text: 'Users don\'t realize they can pay in one tap with Apple/Google Pay', priority: 'medium' }
+        ],
+        solutions: [
+            { name: 'One-tap checkout with guest mode', description: 'Apple/Google Pay up front + checkout without an account', effort: 'M', impact: 'high', matrixX: 30, matrixY: 22, manuallyPositioned: true },
+            { name: 'Address autocomplete + dynamic keyboard', description: 'Google Places API + adaptive input mode for CVV/ZIP', effort: 'S', impact: 'medium', matrixX: 22, matrixY: 48, manuallyPositioned: true }
+        ],
+        assumptions: [
+            { text: 'Mobile users prefer guest checkout over creating an account', risk: 'high', type: 'desirability' },
+            { text: 'Apple Pay is a sufficient trust signal for purchases above €100', risk: 'medium', type: 'desirability' }
+        ],
+        experiments: [{ name: 'Guest checkout A/B test', method: 'Split test on 20% of mobile traffic: A = forced signup vs B = optional guest', duration: '2 weeks', success: 'Variant B with >2.5% mobile conversion + cart abandonment <65%' }],
+        connections: []
+    },
+    healthcare: {
+        outcome: 'Increase medication adherence by 30% in chronic patients with a companion app within 12 months',
+        stakeholders: 'Medical Director, Compliance & GDPR, Patient Advocacy, Pharma Partner',
+        jtbd: 'When I have to take medication every day for a chronic condition, I want a system that reminds me at the right time and understands my context, so that I don\'t skip doses and stay on therapy',
+        metrics: 'Self-reported adherence: from 50% to 80% | On-time pharmacy refills: +40% | Routine visits completed: +25% | NPS 30 days after discharge: >50',
+        personas: [
+            { name: 'Carlo, 65 — Type 2 diabetic patient', segment: 'Senior, basic smartphone user, retired', painpoints: 'Forgets doses on days out of routine, struggles with multiple notifications, doesn\'t trust apps' },
+            { name: 'Marta, 42 — Caregiver daughter', segment: 'Working adult caring for a parent', painpoints: 'Doesn\'t know whether her mother took her medication, anxiety, constant phone calls' }
+        ],
+        opportunities: [
+            { text: 'Generic reminders (8 am alarm) get ignored when the routine changes (travel, holidays)', priority: 'high' },
+            { text: 'Family caregivers have no visibility on adherence without constant calls', priority: 'medium' }
+        ],
+        solutions: [
+            { name: 'Smart reminder with dose confirmation', description: 'Contextual notification (no GPS, optional calendar) with "taken / skipped / postponed" confirmation', effort: 'L', impact: 'high', matrixX: 65, matrixY: 18, manuallyPositioned: true },
+            { name: 'Read-only caregiver dashboard', description: 'Read-only web view shared with a family member, alerts only on repeated misses', effort: 'M', impact: 'medium', matrixX: 45, matrixY: 42, manuallyPositioned: true }
+        ],
+        assumptions: [
+            { text: 'Senior patients accept several notifications a day if well designed and confirmed with a single tap', risk: 'critical', type: 'desirability' },
+            { text: 'Caregivers only want alerts on anomalies, not daily reports', risk: 'medium', type: 'desirability' }
+        ],
+        experiments: [{ name: 'Pilot with a partner clinic', method: 'Beta with 30 diabetic patients for 60 days, structured weekly calls', duration: '2 months', success: 'Self-reported adherence >75% within 60 days and drop-out <20%' }],
+        connections: []
+    },
+    aiml: {
+        outcome: 'Launch an internal AI assistant that resolves >70% of business queries on its own by Q2',
+        stakeholders: 'CTO, Data Science Team, Customer Support Lead, Privacy Officer',
+        jtbd: 'When I have a question about company data (sales, churn, performance), I want a reliable answer in plain language with sources cited, so that I don\'t have to open a ticket with the data team',
+        metrics: 'Queries resolved autonomously: >70% | Measured hallucination rate: <5% | Time-to-answer: <10 sec p95 | Business user NPS: >45 | Tickets to the data team: -50%',
+        personas: [{ name: 'Sara, Sales Manager', segment: 'Business manager, no SQL, data-driven decisions', painpoints: 'Rigid dashboards, dependence on the data team, long waits for non-standard questions' }],
+        opportunities: [
+            { text: 'Any question outside standard reports takes days and a ticket to the data team', priority: 'high' },
+            { text: 'Users don\'t trust AI answers unless they can see where the data comes from', priority: 'high' }
+        ],
+        solutions: [
+            { name: 'AI chat with data warehouse access', description: 'LLM + RAG on the data warehouse, every answer cites the SQL query and the source', effort: 'L', impact: 'high', matrixX: 78, matrixY: 20, manuallyPositioned: true },
+            { name: 'Answer feedback loop (👍 / 👎 + note)', description: 'Every answer is tracked, 👎 answers go to a weekly review queue for the data team', effort: 'S', impact: 'medium', matrixX: 18, matrixY: 45, manuallyPositioned: true }
+        ],
+        assumptions: [
+            { text: 'Business users trust the AI only if they see cited sources and can inspect the query', risk: 'critical', type: 'desirability' },
+            { text: 'The base model + RAG reaches <5% hallucination on typical analytics questions', risk: 'critical', type: 'feasibility' }
+        ],
+        experiments: [{ name: 'Side-by-side beta: dashboard + AI', method: '20 salespeople use the traditional dashboard and the AI side by side for 4 weeks', duration: '1 month', success: 'Weekly usage by >60% of beta users + NPS >40 + measured hallucination <8%' }],
+        connections: []
+    }
+};
+
 async function loadTemplate(type) {
-    const tpl = TEMPLATES[type];
+    const tpl = (getLang() === 'en' && TEMPLATES_EN[type]) || TEMPLATES[type];
     if (!tpl) return;
     // Il template sostituisce tutto il canvas: chiedi conferma se c'è lavoro in corso
     if (!isCanvasEmpty(canvasData)) {
