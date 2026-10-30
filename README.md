@@ -105,7 +105,7 @@ Designed for Product Managers, Product Owners, AI Product Leaders and Innovation
 
 ## 📦 **Pre-filled Templates**
 
-Each template includes: measurable outcome, 1–2 detailed personas, prioritized opportunities, solutions pre-positioned on the matrix, typed assumptions (desirability/feasibility/viability) with risk level, and an experiment with success criteria.
+Templates load in the active language (Italian or English). Each template includes: measurable outcome, 1–2 detailed personas, prioritized opportunities, solutions pre-positioned on the matrix, typed assumptions (desirability/feasibility/viability) with risk level, and an experiment with success criteria.
 
 ### 💳 **Fintech**
 * Use case: KYC automation for fintech
@@ -359,6 +359,9 @@ No installation required. `index.html` is a single offline file (~300 KB, fonts 
 
 ## 📋 **Changelog**
 
+### v2.2.0 — October 2026
+* 🌐 The 6 templates are now available in English: they load in the active language
+
 ### v2.1.0 — October 2026
 * 🧱 Readable source code in `src/` (19 modules) + `build.mjs` to generate `index.html`
 * 🐛 Opening a share link no longer silently overwrites the canvas saved in your browser
@@ -415,7 +418,7 @@ For questions or issues:
 * Inspect browser console (F12) for debugging
 * All data is stored in browser localStorage
 
-**Version:** 2.1.0
+**Version:** 2.2.0
 **Last update:** October 2026
 **Author:** Fabrizio Quaglio Cotti
 
